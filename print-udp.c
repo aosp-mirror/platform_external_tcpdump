@@ -33,7 +33,8 @@ static const char rcsid[] _U_ =
 #ifdef SEGSIZE
 #undef SEGSIZE
 #endif
-#include <arpa/tftp.h>
+//#include <arpa/tftp.h>
+#include "tftp.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -702,4 +703,3 @@ udp_print(register const u_char *bp, u_int length,
  * c-basic-offset: 8
  * End:
  */
-

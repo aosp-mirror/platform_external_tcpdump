@@ -367,6 +367,8 @@ show_dlts_and_exit(pcap_t *pd)
 #endif
 
 #ifndef WIN32
+// not supported on android
+int initgroups(const char *user, gid_t group) {return 0;}
 /* Drop root privileges and chroot if necessary */
 static void
 droproot(const char *username, const char *chroot_dir)
@@ -1458,4 +1460,3 @@ ndo_warning(netdissect_options *ndo _U_, const char *fmt, ...)
 			(void)fputc('\n', stderr);
 	}
 }
-
