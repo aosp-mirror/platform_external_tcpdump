@@ -31,6 +31,7 @@ LOCAL_SRC_FILES:=\
 	print-cip.c\
 	print-cnfp.c\
 	print-dccp.c\
+	print-dhcp6.c\
 	print-decnet.c\
 	print-domain.c\
 	print-dvmrp.c\
@@ -42,12 +43,16 @@ LOCAL_SRC_FILES:=\
 	print-ether.c\
 	print-fddi.c\
 	print-fr.c\
+	print-frag6.c\
 	print-gre.c\
 	print-hsrp.c\
 	print-icmp.c\
+	print-icmp6.c\
 	print-igmp.c\
 	print-igrp.c\
 	print-ip.c\
+	print-ip6.c\
+	print-ip6opts.c\
 	print-ipcomp.c\
 	print-ipfc.c\
 	print-ipx.c\
@@ -63,6 +68,7 @@ LOCAL_SRC_FILES:=\
 	print-lspping.c\
 	print-lwres.c\
 	print-mobile.c\
+	print-mobility.c\
 	print-mpls.c\
 	print-msdp.c\
 	print-nfs.c\
@@ -70,6 +76,7 @@ LOCAL_SRC_FILES:=\
 	print-null.c\
 	print-olsr.c\
 	print-ospf.c\
+	print-ospf6.c\
 	print-pgm.c\
 	print-pim.c\
 	print-ppp.c\
@@ -78,7 +85,9 @@ LOCAL_SRC_FILES:=\
 	print-radius.c\
 	print-raw.c\
 	print-rip.c\
+	print-ripng.c\
 	print-rsvp.c\
+	print-rt6.c\
 	print-rx.c\
 	print-sctp.c\
 	print-sip.c\

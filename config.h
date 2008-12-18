@@ -7,7 +7,7 @@
 /* #undef HAVE_BUGGY_CAST128 */
 
 /* Define if you enable IPv6 support */
-/* #undef INET6 */
+#define INET6 1
 
 /* Define if you enable support for the libsmi. */
 /* #undef LIBSMI */
@@ -93,7 +93,7 @@
 /* #undef HAVE_GETRPCBYNUMBER */
 
 /* define if unaligned memory accesses fail */
-/* #undef LBL_ALIGN */
+#define LBL_ALIGN 1
 
 /* The successful return value from signal (?)XXX */
 #define RETSIGVAL 
