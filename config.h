@@ -131,7 +131,7 @@
 /* #undef HAVE_NETDNET_DNETDB_H_DNET_HTOA */
 
 /* define if should drop privileges by default */
-/* #undef WITH_USER */
+#define WITH_USER "shell"
 
 /* define if should chroot when dropping privileges */
 /* #undef WITH_CHROOT */
