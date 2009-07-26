@@ -119,20 +119,22 @@ LOCAL_SRC_FILES:=\
 	missing/strlcat.c\
 	missing/strlcpy.c
 
-LOCAL_CFLAGS:=-O2 -g
-LOCAL_CFLAGS+=-DHAVE_CONFIG_H -D_U_="__attribute__((unused))"
+LOCAL_CFLAGS := -O2 -g
+LOCAL_CFLAGS += -DHAVE_CONFIG_H -D_U_="__attribute__((unused))"
 
-LOCAL_C_INCLUDES+=\
+LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/missing\
 	external/openssl/include\
 	external/libpcap
 
-LOCAL_SHARED_LIBRARIES+=libssl
+LOCAL_SHARED_LIBRARIES += libssl
 
-LOCAL_STATIC_LIBRARIES+=libpcap
+LOCAL_STATIC_LIBRARIES += libpcap
 
-LOCAL_MODULE_TAGS:=tests
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 
-LOCAL_MODULE:=tcpdump
+LOCAL_MODULE_TAGS := eng
+
+LOCAL_MODULE := tcpdump
 
 include $(BUILD_EXECUTABLE)
