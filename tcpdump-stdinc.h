@@ -127,6 +127,14 @@ typedef char* caddr_t;
 
 #include <arpa/inet.h>
 
+#ifndef NBBY
+#define NBBY	8
+#endif
+
+/* Doesn't exist on Android. */
+#define setprotoent(...)
+#define endprotoent(...)
+
 #endif /* WIN32 */
 
 #ifndef HAVE___ATTRIBUTE__
