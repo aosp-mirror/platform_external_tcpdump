@@ -180,7 +180,7 @@
 /* #undef HAVE_STRLCAT */
 
 /* Define to 1 if you have the `strlcpy' function. */
-/* #undef HAVE_STRLCPY */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the `strsep' function. */
 #define HAVE_STRSEP 1
