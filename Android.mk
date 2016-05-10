@@ -164,6 +164,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(tcpdump_src_files)
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -D_U_="__attribute__((unused))"
+LOCAL_CFLAGS += -Werror
 LOCAL_SHARED_LIBRARIES += libssl libcrypto
 LOCAL_STATIC_LIBRARIES += libpcap
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
