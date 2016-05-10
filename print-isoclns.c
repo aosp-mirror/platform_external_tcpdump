@@ -3091,9 +3091,9 @@ osi_print_cksum(netdissect_options *ndo, const uint8_t *pptr,
             || length > ndo->ndo_snaplen
             || checksum_offset > ndo->ndo_snaplen
             || checksum_offset > length) {
-                ND_PRINT((ndo, "(unverified)"));
+                ND_PRINT((ndo, " (unverified)"));
         } else {
-                unsigned char *truncated = "trunc";
+                const char *truncated = "trunc";
 #if 0
                 printf("\nosi_print_cksum: %p %u %u %u\n", pptr, checksum_offset, length, ndo->ndo_snaplen);
                 ND_TCHECK2(pptr, checksum_offset+length);
