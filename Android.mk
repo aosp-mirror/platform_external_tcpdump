@@ -162,6 +162,7 @@ tcpdump_src_files := \
 
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(tcpdump_src_files)
+LOCAL_CFLAGS += -D_BSD_SOURCE
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -D_U_="__attribute__((unused))"
 LOCAL_CFLAGS += -Werror
