@@ -2,8 +2,8 @@
 *.rej
 Makefile
 *~
+*.a
 *.o
-config.h
 config.log
 config.cache
 config.status
@@ -14,6 +14,5 @@ stamp-h.in
 tcpdump
 tcpdump.1
 tcpdump-*.tar.gz
-version.c
 failure-outputs.txt
 autom4te.cache/
