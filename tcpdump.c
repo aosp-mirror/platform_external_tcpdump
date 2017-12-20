@@ -130,7 +130,7 @@ The Regents of the University of California.  All rights reserved.\n";
 #endif
 
 static int Bflag;			/* buffer size */
-static int Cflag;			/* rotate dump files after this many bytes */
+static long Cflag;			/* rotate dump files after this many bytes */
 static int Cflag_count;			/* Keep track of which file number we're writing */
 static int Dflag;			/* list available devices and exit */
 /*
@@ -1046,9 +1046,9 @@ open_interface(const char *device, netdissect_options *ndo, char *ebuf)
 			/*
 			 * Return an error for our caller to handle.
 			 */
-			pcap_close(pc);
 			snprintf(ebuf, PCAP_ERRBUF_SIZE, "%s: %s\n(%s)",
 			    device, pcap_statustostr(status), cp);
+			pcap_close(pc);
 			return (NULL);
 		} else if (status == PCAP_ERROR_PERM_DENIED && *cp != '\0')
 			error("%s: %s\n(%s)", device,
@@ -1855,7 +1855,12 @@ main(int argc, char **argv)
 	if (RFileName == NULL && VFileName == NULL) {
 		static const unsigned long cmds[] = { BIOCGSTATS, BIOCROTZBUF };
 
-		cap_rights_init(&rights, CAP_IOCTL, CAP_READ);
+		/*
+		 * The various libpcap devices use a combination of
+		 * read (bpf), ioctl (bpf, netmap), poll (netmap)
+		 * so we add the relevant access rights.
+		 */
+		cap_rights_init(&rights, CAP_IOCTL, CAP_READ, CAP_EVENT);
 		if (cap_rights_limit(pcap_fileno(pd), &rights) < 0 &&
 		    errno != ENOSYS) {
 			error("unable to limit pcap descriptor");
@@ -2599,6 +2604,14 @@ print_version(void)
 	smi_version_string = nd_smi_version_string();
 	if (smi_version_string != NULL)
 		(void)fprintf (stderr, "SMI-library: %s\n", smi_version_string);
+
+#if defined(__SANITIZE_ADDRESS__)
+	(void)fprintf (stderr, "Compiled with AddressSanitizer/GCC.\n");
+#elif defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+	(void)fprintf (stderr, "Compiled with AddressSanitizer/CLang.\n");
+#  endif
+#endif /* __SANITIZE_ADDRESS__ or __has_feature */
 }
 USES_APPLE_RST
 
