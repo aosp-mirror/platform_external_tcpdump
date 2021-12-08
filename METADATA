@@ -16,4 +16,7 @@ third_party {
     month: 8
     day: 20
   }
+  security {
+      tag: "NVD-CPE2.3:cpe:/a:tcpdump:tcpdump:4.9.3"
+  }
 }
