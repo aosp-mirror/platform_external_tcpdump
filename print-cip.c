@@ -20,17 +20,16 @@
  *
  */
 
-/* \summary: Linux Classical IP over ATM printer */
+/* \summary: Classical-IP over ATM printer */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <string.h>
 
-#include "netdissect-stdinc.h"
+#include <netdissect-stdinc.h>
 
-#define ND_LONGJMP_FROM_TCHECK
 #include "netdissect.h"
 #include "addrtoname.h"
 
@@ -42,29 +41,43 @@ static const unsigned char rfcllc[] = {
 	0x00,
 	0x00 };
 
+static inline void
+cip_print(netdissect_options *ndo, u_int length)
+{
+	/*
+	 * There is no MAC-layer header, so just print the length.
+	 */
+	ND_PRINT((ndo, "%u: ", length));
+}
+
 /*
  * This is the top level routine of the printer.  'p' points
  * to the LLC/SNAP or raw header of the packet, 'h->ts' is the timestamp,
  * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
-void
+u_int
 cip_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
 	u_int length = h->len;
+	size_t cmplen;
 	int llc_hdrlen;
 
-	ndo->ndo_protocol = "cip";
+	cmplen = sizeof(rfcllc);
+	if (cmplen > caplen)
+		cmplen = caplen;
+	if (cmplen > length)
+		cmplen = length;
 
 	if (ndo->ndo_eflag)
-		/*
-		 * There is no MAC-layer header, so just print the length.
-		 */
-		ND_PRINT("%u: ", length);
+		cip_print(ndo, length);
 
-	ND_TCHECK_LEN(p, sizeof(rfcllc));
-	if (memcmp(rfcllc, p, sizeof(rfcllc)) == 0) {
+	if (cmplen == 0) {
+		ND_PRINT((ndo, "[|cip]"));
+		return 0;
+	}
+	if (memcmp(rfcllc, p, cmplen) == 0) {
 		/*
 		 * LLC header is present.  Try to print it & higher layers.
 		 */
@@ -83,5 +96,13 @@ cip_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char 
 		ip_print(ndo, p, length);
 	}
 
-	ndo->ndo_ll_hdr_len += llc_hdrlen;
+	return (llc_hdrlen);
 }
+
+
+/*
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
+ */

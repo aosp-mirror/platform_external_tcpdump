@@ -33,12 +33,14 @@
 /* \summary: SunATM DLPI capture printer */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#include "netdissect-stdinc.h"
+#include <netdissect-stdinc.h>
 
-#define ND_LONGJMP_FROM_TCHECK
+struct mbuf;
+struct rtentry;
+
 #include "netdissect.h"
 #include "extract.h"
 
@@ -60,7 +62,7 @@
  * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
-void
+u_int
 sunatm_if_print(netdissect_options *ndo,
                 const struct pcap_pkthdr *h, const u_char *p)
 {
@@ -70,13 +72,16 @@ sunatm_if_print(netdissect_options *ndo,
 	u_char vpi;
 	u_int traftype;
 
-	ndo->ndo_protocol = "sunatm";
-
-	if (ndo->ndo_eflag) {
-		ND_PRINT(GET_U_1(p + DIR_POS) & 0x80 ? "Tx: " : "Rx: ");
+	if (caplen < PKT_BEGIN_POS) {
+		ND_PRINT((ndo, "[|atm]"));
+		return (caplen);
 	}
 
-	switch (GET_U_1(p + DIR_POS) & 0x0f) {
+	if (ndo->ndo_eflag) {
+		ND_PRINT((ndo, p[DIR_POS] & 0x80 ? "Tx: " : "Rx: "));
+	}
+
+	switch (p[DIR_POS] & 0x0f) {
 
 	case PT_LANE:
 		traftype = ATM_LANE;
@@ -91,12 +96,13 @@ sunatm_if_print(netdissect_options *ndo,
 		break;
 	}
 
-	vpi = GET_U_1(p + VPI_POS);
-	vci = GET_BE_U_2(p + VCI_POS);
+	vci = EXTRACT_16BITS(&p[VCI_POS]);
+	vpi = p[VPI_POS];
 
 	p += PKT_BEGIN_POS;
 	caplen -= PKT_BEGIN_POS;
 	length -= PKT_BEGIN_POS;
-	ndo->ndo_ll_hdr_len += PKT_BEGIN_POS;
 	atm_print(ndo, vpi, vci, traftype, p, length, caplen);
+
+	return (PKT_BEGIN_POS);
 }
