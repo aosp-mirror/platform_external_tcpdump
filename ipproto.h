@@ -36,7 +36,7 @@
  */
 
 extern const struct tok ipproto_values[];
-extern const char *netdb_protoname (const uint8_t);
+extern const char *netdb_protoname (const nd_uint8_t);
 
 #ifndef IPPROTO_IP
 #define	IPPROTO_IP		0		/* dummy for IP */
@@ -104,7 +104,8 @@ extern const char *netdb_protoname (const uint8_t);
 #ifndef IPPROTO_MOBILITY_OLD
 /*
  * The current Protocol Numbers list says that the IP protocol number for
- * mobility headers is 135; it cites RFC 6275 (obsoletes RFC 3775).
+ * mobility headers is 135; it cites draft-ietf-mobileip-ipv6-24, but
+ * that draft doesn't actually give a number.
  *
  * It appears that 62 used to be used, even though that's assigned to
  * a protocol called CFTP; however, the only reference for CFTP is a
@@ -129,7 +130,10 @@ extern const char *netdb_protoname (const uint8_t);
 #define IPPROTO_IPCOMP		108
 #endif
 #ifndef IPPROTO_VRRP
-#define IPPROTO_VRRP		112 /* See also CARP. */
+#define IPPROTO_VRRP		112
+#endif
+#ifndef IPPROTO_CARP
+#define IPPROTO_CARP		112
 #endif
 #ifndef IPPROTO_PGM
 #define IPPROTO_PGM             113
@@ -139,7 +143,4 @@ extern const char *netdb_protoname (const uint8_t);
 #endif
 #ifndef IPPROTO_MOBILITY
 #define IPPROTO_MOBILITY	135
-#endif
-#ifndef IPPROTO_ETHERNET
-#define IPPROTO_ETHERNET	143 /* TEMPORARY - registered 2020-01-31, expires 2021-01-31 */
 #endif
