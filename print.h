@@ -28,11 +28,12 @@
 #ifndef print_h
 #define print_h
 
-void	init_print(netdissect_options *ndo, uint32_t localnet, uint32_t mask);
+void	init_print(netdissect_options *ndo, uint32_t localnet, uint32_t mask,
+	    uint32_t timezone_offset);
 
 int	has_printer(int type);
 
-if_printer get_if_printer(int type);
+if_printer get_if_printer(netdissect_options *ndo, int type);
 
 void	pretty_print_packet(netdissect_options *ndo,
 	    const struct pcap_pkthdr *h, const u_char *sp,
