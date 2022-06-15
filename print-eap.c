@@ -21,10 +21,10 @@
 /* \summary: Extensible Authentication Protocol (EAP) printer */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#include "netdissect-stdinc.h"
+#include <netdissect-stdinc.h>
 
 #include "netdissect.h"
 #include "extract.h"
@@ -36,9 +36,9 @@
 #define	EAP_FRAME_TYPE_ENCAP_ASF_ALERT	4
 
 struct eap_frame_t {
-    nd_uint8_t  version;
-    nd_uint8_t  type;
-    nd_uint16_t length;
+    unsigned char   version;
+    unsigned char   type;
+    unsigned char   length[2];
 };
 
 static const struct tok eap_frame_type_values[] = {
@@ -52,9 +52,9 @@ static const struct tok eap_frame_type_values[] = {
 
 /* RFC 3748 */
 struct eap_packet_t {
-    nd_uint8_t  code;
-    nd_uint8_t  id;
-    nd_uint16_t length;
+    unsigned char	code;
+    unsigned char	id;
+    unsigned char	length[2];
 };
 
 #define		EAP_REQUEST	1
@@ -148,44 +148,71 @@ static const struct tok eap_aka_subtype_values[] = {
  */
 void
 eap_print(netdissect_options *ndo,
-          const u_char *cp,
+          register const u_char *cp,
           u_int length)
 {
-    u_int type, subtype, len;
-    int count;
+    const struct eap_frame_t *eap;
+    const u_char *tptr;
+    u_int tlen, type, subtype;
+    int count=0, len;
 
-    type = GET_U_1(cp);
-    len = GET_BE_U_2(cp + 2);
-    if(len != length) {
-       goto trunc;
+    tptr = cp;
+    tlen = length;
+    eap = (const struct eap_frame_t *)cp;
+    ND_TCHECK(*eap);
+
+    /* in non-verbose mode just lets print the basic info */
+    if (ndo->ndo_vflag < 1) {
+	ND_PRINT((ndo, "%s (%u) v%u, len %u",
+               tok2str(eap_frame_type_values, "unknown", eap->type),
+               eap->type,
+               eap->version,
+               EXTRACT_16BITS(eap->length)));
+	return;
     }
-    ND_PRINT("%s (%u), id %u, len %u",
-            tok2str(eap_code_values, "unknown", type),
-            type,
-            GET_U_1((cp + 1)),
-            len);
 
-    ND_TCHECK_LEN(cp, len);
+    ND_PRINT((ndo, "%s (%u) v%u, len %u",
+           tok2str(eap_frame_type_values, "unknown", eap->type),
+           eap->type,
+           eap->version,
+           EXTRACT_16BITS(eap->length)));
 
-    if (type == EAP_REQUEST || type == EAP_RESPONSE) {
-        /* RFC 3748 Section 4.1 */
-        subtype = GET_U_1(cp + 4);
-        ND_PRINT("\n\t\t Type %s (%u)",
-                tok2str(eap_type_values, "unknown", subtype),
-                subtype);
+    tptr += sizeof(const struct eap_frame_t);
+    tlen -= sizeof(const struct eap_frame_t);
 
-        switch (subtype) {
+    switch (eap->type) {
+    case EAP_FRAME_TYPE_PACKET:
+        ND_TCHECK_8BITS(tptr);
+        type = *(tptr);
+        ND_TCHECK_16BITS(tptr+2);
+        len = EXTRACT_16BITS(tptr+2);
+        ND_PRINT((ndo, ", %s (%u), id %u, len %u",
+               tok2str(eap_code_values, "unknown", type),
+               type,
+               *(tptr+1),
+               len));
+
+        ND_TCHECK2(*tptr, len);
+
+        if (type <= 2) { /* For EAP_REQUEST and EAP_RESPONSE only */
+            ND_TCHECK_8BITS(tptr+4);
+            subtype = *(tptr+4);
+            ND_PRINT((ndo, "\n\t\t Type %s (%u)",
+                   tok2str(eap_type_values, "unknown", subtype),
+                   subtype));
+
+            switch (subtype) {
             case EAP_TYPE_IDENTITY:
                 if (len - 5 > 0) {
-                    ND_PRINT(", Identity: ");
-                    nd_printjnp(ndo, cp + 5, len - 5);
+                    ND_PRINT((ndo, ", Identity: "));
+                    safeputs(ndo, tptr + 5, len - 5);
                 }
                 break;
 
             case EAP_TYPE_NOTIFICATION:
                 if (len - 5 > 0) {
-                    ND_PRINT(", Notification: ");
-                    nd_printjnp(ndo, cp + 5, len - 5);
+                    ND_PRINT((ndo, ", Notification: "));
+                    safeputs(ndo, tptr + 5, len - 5);
                 }
                 break;
 
@@ -197,37 +224,42 @@ eap_print(netdissect_options *ndo,
                  * the desired authentication
                  * type one octet per type
                  */
-                while (count < (int)len) {
-                    ND_PRINT(" %s (%u),",
-                           tok2str(eap_type_values, "unknown", GET_U_1((cp + count))),
-                           GET_U_1(cp + count));
+                while (count < len) {
+                    ND_TCHECK_8BITS(tptr+count);
+                    ND_PRINT((ndo, " %s (%u),",
+                           tok2str(eap_type_values, "unknown", *(tptr+count)),
+                           *(tptr + count)));
                     count++;
                 }
                 break;
 
             case EAP_TYPE_TTLS:
             case EAP_TYPE_TLS:
+                ND_TCHECK_8BITS(tptr + 5);
                 if (subtype == EAP_TYPE_TTLS)
-                    ND_PRINT(" TTLSv%u",
-                           EAP_TTLS_VERSION(GET_U_1((cp + 5))));
-                ND_PRINT(" flags [%s] 0x%02x,",
-                       bittok2str(eap_tls_flags_values, "none", GET_U_1((cp + 5))),
-                       GET_U_1(cp + 5));
+                    ND_PRINT((ndo, " TTLSv%u",
+                           EAP_TTLS_VERSION(*(tptr + 5))));
+                ND_PRINT((ndo, " flags [%s] 0x%02x,",
+                       bittok2str(eap_tls_flags_values, "none", *(tptr+5)),
+                       *(tptr + 5)));
 
-                if (EAP_TLS_EXTRACT_BIT_L(GET_U_1(cp + 5))) {
-                    ND_PRINT(" len %u", GET_BE_U_4(cp + 6));
+                if (EAP_TLS_EXTRACT_BIT_L(*(tptr+5))) {
+                    ND_TCHECK_32BITS(tptr + 6);
+		    ND_PRINT((ndo, " len %u", EXTRACT_32BITS(tptr + 6)));
                 }
                 break;
 
             case EAP_TYPE_FAST:
-                ND_PRINT(" FASTv%u",
-                       EAP_TTLS_VERSION(GET_U_1((cp + 5))));
-                ND_PRINT(" flags [%s] 0x%02x,",
-                       bittok2str(eap_tls_flags_values, "none", GET_U_1((cp + 5))),
-                       GET_U_1(cp + 5));
+                ND_TCHECK_8BITS(tptr + 5);
+                ND_PRINT((ndo, " FASTv%u",
+                       EAP_TTLS_VERSION(*(tptr + 5))));
+                ND_PRINT((ndo, " flags [%s] 0x%02x,",
+                       bittok2str(eap_tls_flags_values, "none", *(tptr+5)),
+                       *(tptr + 5)));
 
-                if (EAP_TLS_EXTRACT_BIT_L(GET_U_1(cp + 5))) {
-                    ND_PRINT(" len %u", GET_BE_U_4(cp + 6));
+                if (EAP_TLS_EXTRACT_BIT_L(*(tptr+5))) {
+                    ND_TCHECK_32BITS(tptr + 6);
+                    ND_PRINT((ndo, " len %u", EXTRACT_32BITS(tptr + 6)));
                 }
 
                 /* FIXME - TLV attributes follow */
@@ -235,9 +267,10 @@ eap_print(netdissect_options *ndo,
 
             case EAP_TYPE_AKA:
             case EAP_TYPE_SIM:
-                ND_PRINT(" subtype [%s] 0x%02x,",
-                       tok2str(eap_aka_subtype_values, "unknown", GET_U_1((cp + 5))),
-                       GET_U_1(cp + 5));
+                ND_TCHECK_8BITS(tptr + 5);
+                ND_PRINT((ndo, " subtype [%s] 0x%02x,",
+                       tok2str(eap_aka_subtype_values, "unknown", *(tptr+5)),
+                       *(tptr + 5)));
 
                 /* FIXME - TLV attributes follow */
                 break;
@@ -249,43 +282,10 @@ eap_print(netdissect_options *ndo,
             case EAP_TYPE_EXPERIMENTAL:
             default:
                 break;
+            }
         }
-    }
-    return;
-trunc:
-    nd_print_trunc(ndo);
-}
+        break;
 
-void
-eapol_print(netdissect_options *ndo,
-            const u_char *cp)
-{
-    const struct eap_frame_t *eap;
-    u_int eap_type, eap_len;
-
-    ndo->ndo_protocol = "eap";
-    eap = (const struct eap_frame_t *)cp;
-    ND_TCHECK_SIZE(eap);
-    eap_type = GET_U_1(eap->type);
-
-    ND_PRINT("%s (%u) v%u, len %u",
-           tok2str(eap_frame_type_values, "unknown", eap_type),
-           eap_type,
-           GET_U_1(eap->version),
-           GET_BE_U_2(eap->length));
-    if (ndo->ndo_vflag < 1)
-        return;
-
-    cp += sizeof(struct eap_frame_t);
-    eap_len = GET_BE_U_2(eap->length);
-
-    switch (eap_type) {
-    case EAP_FRAME_TYPE_PACKET:
-        if (eap_len == 0)
-            goto trunc;
-        ND_PRINT(", ");
-        eap_print(ndo, cp, eap_len);
-        return;
     case EAP_FRAME_TYPE_LOGOFF:
     case EAP_FRAME_TYPE_ENCAP_ASF_ALERT:
     default:
@@ -294,5 +294,11 @@ eapol_print(netdissect_options *ndo,
     return;
 
  trunc:
-    nd_print_trunc(ndo);
+    ND_PRINT((ndo, "\n\t[|EAP]"));
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 4
+ * End:
+ */
