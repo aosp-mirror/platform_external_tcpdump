@@ -16,8 +16,9 @@ license {
     ],
 }
 
-cc_binary {
-    name: "tcpdump",
+cc_defaults {
+    name: "tcpdump_defaults",
+
     host_supported: false,
 
     cflags: [
@@ -223,4 +224,16 @@ cc_binary {
         "libcrypto",
         "libpcap",
     ],
+}
+
+cc_binary {
+    name: "tcpdump",
+    defaults: ["tcpdump_defaults"],
+}
+
+cc_binary {
+    name: "tcpdump_vendor",
+    stem: "tcpdump",
+    defaults: ["tcpdump_defaults"],
+    vendor: true,
 }
