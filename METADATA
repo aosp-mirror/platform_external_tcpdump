@@ -6,8 +6,8 @@ third_party {
     value: "https://www.tcpdump.org/"
   }
   url {
-    type: ARCHIVE
-    value: "https://github.com/the-tcpdump-group/tcpdump/archive/tcpdump-4.99.1.tar.gz"
+    type: GIT
+    value: "https://github.com/the-tcpdump-group/tcpdump.git"
   }
   version: "tcpdump-4.99.1"
   license_type: NOTICE
