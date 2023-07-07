@@ -73,11 +73,8 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #define HAVE_NET_IF_H 1
 
-/* Define to 1 if you have the <net/if_pflog.h> header file. */
-/* #undef HAVE_NET_IF_PFLOG_H */
-
-/* Define to 1 if you have the <net/pfvar.h> header file. */
-/* #undef HAVE_NET_PFVAR_H */
+/* Define to 1 if printf(3) does not support the z length modifier. */
+/* #undef HAVE_NO_PRINTF_Z */
 
 /* Define to 1 if you have the `openat' function. */
 /* #undef HAVE_OPENAT */
@@ -239,7 +236,7 @@
 #define PACKAGE_NAME "tcpdump"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "tcpdump 4.99.1"
+#define PACKAGE_STRING "tcpdump 4.99.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tcpdump"
@@ -248,7 +245,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.99.1"
+#define PACKAGE_VERSION "4.99.3"
+
+/* The size of `void *', as computed by sizeof. */
+/* #undef SIZEOF_VOID_P */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
