@@ -1,137 +1,123 @@
-#!/usr/bin/env bash
+#!/bin/sh -e
 
 # This script runs one build with setup environment variables: BUILD_LIBPCAP,
-# REMOTE, CC, CMAKE, CRYPTO and SMB
-# (default: BUILD_LIBPCAP=no, REMOTE=no, CC=gcc, CMAKE=no, CRYPTO=no, SMB=no).
+# REMOTE, CC, CMAKE, CRYPTO and SMB.
 
-set -e
+: "${BUILD_LIBPCAP:=no}"
+: "${REMOTE:=no}"
+: "${CC:=gcc}"
+: "${CMAKE:=no}"
+: "${CRYPTO:=no}"
+: "${SMB:=no}"
+: "${TCPDUMP_TAINTED:=no}"
+: "${TCPDUMP_CMAKE_TAINTED:=no}"
+: "${MAKE_BIN:=make}"
 
-# BUILD_LIBPCAP: no or yes
-BUILD_LIBPCAP=${BUILD_LIBPCAP:-no}
-# REMOTE: no or yes
-REMOTE=${REMOTE:-no}
-# CC: gcc or clang
-CC=${CC:-gcc}
-# GCC and Clang recognize --version and print to stdout. Sun compilers
-# recognize -V and print to stderr.
-"$CC" --version 2>/dev/null || "$CC" -V || :
-# CMAKE: no or yes
-CMAKE=${CMAKE:-no}
-# CRYPTO: no or yes
-CRYPTO=${CRYPTO:-no}
-# SMB: no or yes
-SMB=${SMB:-no}
+. ./build_common.sh
 # Install directory prefix
 if [ -z "$PREFIX" ]; then
-    PREFIX=$(mktemp -d -t tcpdump_build_XXXXXXXX)
+    PREFIX=`mktempdir tcpdump_build`
     echo "PREFIX set to '$PREFIX'"
 fi
+TCPDUMP_BIN="$PREFIX/bin/tcpdump"
 # For TESTrun
-export TCPDUMP_BIN="$PREFIX/bin/tcpdump"
+export TCPDUMP_BIN
 
-travis_fold() {
-    local action=${1:?}
-    local name=${2:?}
-    if [ "$TRAVIS" != true ]; then return; fi
-    echo -ne "travis_fold:$action:$LABEL.script.$name\\r"
-    sleep 1
-}
+print_cc_version
 
-# Run a command after displaying it
-run_after_echo() {
-    echo -n '$ '
-    echo "$@"
-    # shellcheck disable=SC2068
-    $@
-}
+# The norm is to compile without any warnings, but tcpdump builds on some OSes
+# are not warning-free for one or another reason.  If you manage to fix one of
+# these cases, please remember to remove respective exemption below to help any
+# later warnings in the same matrix subset trigger an error.
 
-# LABEL is needed to build the travis fold labels
-LABEL="$BUILD_LIBPCAP.$REMOTE.$CC.$CMAKE.$CRYPTO.$SMB"
+case `cc_id`/`os_id` in
+clang-*/SunOS-5.11)
+    # (Clang 9 on OpenIndiana, Clang 11 on OmniOS)
+    # tcpdump.c:2312:51: warning: this function declaration is not a prototype
+    #   [-Wstrict-prototypes]
+    # tcpdump.c:2737:11: warning: this function declaration is not a prototype
+    #   [-Wstrict-prototypes]
+    [ "`uname -o`" = illumos ] && TCPDUMP_TAINTED=yes
+    ;;
+esac
+
+[ "$TCPDUMP_TAINTED" != yes ] && CFLAGS=`cc_werr_cflags`
+
+# If necessary, set TCPDUMP_CMAKE_TAINTED here to exempt particular cmake from
+# warnings. Use as specific terms as possible (e.g. some specific version and
+# some specific OS).
+
+[ "$TCPDUMP_CMAKE_TAINTED" != yes ] && CMAKE_OPTIONS='-Werror=dev'
+
 if [ "$CMAKE" = no ]; then
-    echo '$ ./configure [...]'
-    travis_fold start configure
     if [ "$BUILD_LIBPCAP" = yes ]; then
         echo "Using PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-        ./configure --with-crypto="$CRYPTO" --enable-smb="$SMB" --prefix="$PREFIX"
-        export LD_LIBRARY_PATH="$PREFIX/lib"
+        run_after_echo ./configure --with-crypto="$CRYPTO" \
+            --enable-smb="$SMB" --prefix="$PREFIX"
+        LD_LIBRARY_PATH="$PREFIX/lib"
+        export LD_LIBRARY_PATH
     else
-        ./configure --disable-local-libpcap --with-crypto="$CRYPTO" --enable-smb="$SMB" --prefix="$PREFIX"
+        run_after_echo ./configure --with-crypto="$CRYPTO" \
+            --enable-smb="$SMB" --prefix="$PREFIX" --disable-local-libpcap
     fi
-    travis_fold end configure
 else
-    rm -rf build
-    mkdir build
-    cd build
-    echo '$ cmake [...]'
-    travis_fold start cmake
+    # See libpcap build.sh for the rationale.
+    run_after_echo rm -rf CMakeFiles/ CMakeCache.txt build/
+    run_after_echo mkdir build
+    run_after_echo cd build
     if [ "$BUILD_LIBPCAP" = yes ]; then
-        cmake -DWITH_CRYPTO="$CRYPTO" -DENABLE_SMB="$SMB" -DCMAKE_PREFIX_PATH="$PREFIX" -DCMAKE_INSTALL_PREFIX="$PREFIX" ..
-        export LD_LIBRARY_PATH="$PREFIX/lib"
+        run_after_echo cmake "$CMAKE_OPTIONS" \
+            -DWITH_CRYPTO="$CRYPTO" -DENABLE_SMB="$SMB" \
+            ${CFLAGS:+-DEXTRA_CFLAGS="$CFLAGS"} \
+            -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_PREFIX_PATH="$PREFIX" ..
+        LD_LIBRARY_PATH="$PREFIX/lib"
+        export LD_LIBRARY_PATH
     else
-        cmake -DWITH_CRYPTO="$CRYPTO" -DENABLE_SMB="$SMB" -DCMAKE_INSTALL_PREFIX="$PREFIX" ..
+        run_after_echo cmake "$CMAKE_OPTIONS" \
+            -DWITH_CRYPTO="$CRYPTO" -DENABLE_SMB="$SMB" \
+             ${CFLAGS:+-DEXTRA_CFLAGS="$CFLAGS"} \
+            -DCMAKE_INSTALL_PREFIX="$PREFIX" ..
     fi
-    travis_fold end cmake
 fi
-run_after_echo "make -s clean"
-run_after_echo "make -s CFLAGS=-Werror"
-echo '$ make install'
-travis_fold start make_install
-make install
-travis_fold end make_install
-run_after_echo "$TCPDUMP_BIN --version"
-run_after_echo "$TCPDUMP_BIN -h"
-run_after_echo "$TCPDUMP_BIN -D"
-system=$(uname -s)
-if [ "$system" = Linux ]; then
-    run_after_echo "ldd $TCPDUMP_BIN"
+run_after_echo "$MAKE_BIN" -s clean
+if [ "$CMAKE" = no ]; then
+    run_after_echo "$MAKE_BIN" -s ${CFLAGS:+CFLAGS="$CFLAGS"}
+else
+    # The "-s" flag is a no-op and CFLAGS is set using -DEXTRA_CFLAGS above.
+    run_after_echo "$MAKE_BIN"
 fi
-if [ "$TRAVIS" = true ]; then
-    if [ -n "$LD_LIBRARY_PATH" ]; then
-        run_after_echo "sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH $TCPDUMP_BIN -J"
-        run_after_echo "sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH $TCPDUMP_BIN -L"
-    else
-        run_after_echo "sudo $TCPDUMP_BIN -J"
-        run_after_echo "sudo $TCPDUMP_BIN -L"
-    fi
+run_after_echo "$MAKE_BIN" install
+print_so_deps "$TCPDUMP_BIN"
+run_after_echo "$TCPDUMP_BIN" -h
+# The "-D" flag depends on HAVE_PCAP_FINDALLDEVS and it would not be difficult
+# to run the command below only if the macro is defined.  That said, it seems
+# more useful to run it anyway: every system that currently runs this script
+# has pcap_findalldevs(), thus if the macro isn't defined, it means something
+# went wrong in the build process (as was observed with GCC, CMake and the
+# system libpcap on Solaris 11).
+run_after_echo "$TCPDUMP_BIN" -D
+if [ "$CIRRUS_CI" = true ]; then
+    # Likewise for the "-J" flag and HAVE_PCAP_SET_TSTAMP_TYPE.
+    run_after_echo sudo \
+        ${LD_LIBRARY_PATH:+LD_LIBRARY_PATH="$LD_LIBRARY_PATH"} \
+        "$TCPDUMP_BIN" -J
+    run_after_echo sudo \
+        ${LD_LIBRARY_PATH:+LD_LIBRARY_PATH="$LD_LIBRARY_PATH"} \
+        "$TCPDUMP_BIN" -L
 fi
 if [ "$BUILD_LIBPCAP" = yes ]; then
-    run_after_echo "make check"
+    run_after_echo "$MAKE_BIN" check
 fi
 if [ "$CMAKE" = no ]; then
-    system=$(uname -s)
-    if [ "$system" = Darwin ] || [ "$system" = Linux ]; then
-        run_after_echo "make releasetar"
-    fi
+    run_after_echo "$MAKE_BIN" releasetar
 fi
-if [ "$TRAVIS" = true ]; then
-    if [ "$TRAVIS_OS_NAME" = linux ] && [ "$TRAVIS_CPU_ARCH" != ppc64le ] && [ "$TRAVIS_CPU_ARCH" != s390x ] && [ "$TRAVIS_CPU_ARCH" != arm64 ]; then
-        if [ -n "$LD_LIBRARY_PATH" ]; then
-            run_after_echo "sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH $TCPDUMP_BIN -#n -c 10"
-        else
-            run_after_echo "sudo $TCPDUMP_BIN -#n -c 10"
-        fi
-    fi
+if [ "$CIRRUS_CI" = true ]; then
+    run_after_echo sudo \
+        ${LD_LIBRARY_PATH:+LD_LIBRARY_PATH="$LD_LIBRARY_PATH"} \
+        "$TCPDUMP_BIN" -#n -c 10
 fi
-# The DEBUG_BUILD variable is not set by default to avoid Travis error message:
-# "The job exceeded the maximum log length, and has been terminated."
-# Setting it needs to reduce the matrix cases.
-if [ "$TRAVIS" = true ] && [ -n "$DEBUG_BUILD" ] ; then
-    echo '$ cat Makefile [...]'
-    travis_fold start cat_makefile
-    sed '/DO NOT DELETE THIS LINE -- mkdep uses it/q' < Makefile
-    travis_fold end cat_makefile
-    echo '$ cat config.h'
-    travis_fold start cat_config_h
-    cat config.h
-    travis_fold end cat_config_h
-    if [ "$CMAKE" = no ]; then
-        echo '$ cat config.log'
-        travis_fold start cat_config_log
-        cat config.log
-        travis_fold end cat_config_log
-    fi
-fi
+handle_matrix_debug
 if [ "$DELETE_PREFIX" = yes ]; then
-    rm -rf "$PREFIX"
+    run_after_echo rm -rf "$PREFIX"
 fi
 # vi: set tabstop=4 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent :
