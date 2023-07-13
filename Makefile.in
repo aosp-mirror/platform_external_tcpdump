@@ -1,5 +1,5 @@
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
-# 	The Regents of the University of California.  All rights reserved.
+#	The Regents of the University of California.  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that: (1) source code distributions
@@ -327,9 +327,9 @@ TAGHDR = \
 	/usr/include/netinet/in.h
 
 TAGFILES = $(SRC) $(HDR) $(TAGHDR) $(LIBNETDISSECT_SRC) \
-	print-pflog.c print-smb.c smbutil.c
+	print-smb.c smbutil.c
 
-CLEANFILES = $(PROG) $(OBJ) $(LIBNETDISSECT_OBJ)
+CLEANFILES = $(PROG) $(OBJ) $(LIBNETDISSECT_OBJ) print-smb.o smbutil.o
 
 EXTRA_DIST = \
 	CHANGES \
@@ -378,7 +378,6 @@ EXTRA_DIST = \
 	missing/strsep.c \
 	mkdep \
 	packetdat.awk \
-	print-pflog.c \
 	print-smb.c \
 	send-ack.awk \
 	smbutil.c \
@@ -522,6 +521,11 @@ whitespacecheck:
 	@# install-sh has a tab at the end of one line
 	@if git grep -I -n '	$$' $$(git ls-files|grep -vE '^(tests/|install-sh$$)'); then \
 	    echo 'Error: Trailing tabs(s).'; \
+	    exit 1; \
+	fi
+	@# space(s) before tab(s)?
+	@if git grep -I -n '[ ][	]' $$(git ls-files|grep -v '^tests/'); then \
+	    echo 'Error: space(s) before tab(s).'; \
 	    exit 1; \
 	fi
 
