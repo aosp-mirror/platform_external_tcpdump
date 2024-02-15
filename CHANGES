@@ -1,3 +1,20 @@
+Friday, April 7, 2023 / The Tcpdump Group
+  Summary for 4.99.4 tcpdump release
+    Source code:
+      Fix spaces before tabs in indentation.
+    Updated printers:
+      LSP ping: Fix "Unused value" warnings from Coverity.
+      CVE-2023-1801: Fix an out-of-bounds write in the SMB printer.
+      DNS: sync resource types with IANA.
+      ICMPv6: Update the output to show a RPL DAO field name.
+      Geneve: Fix the Geneve UDP port test.
+    Building and testing:
+      Require at least autoconf 2.69.
+      Don't check for strftime(), as it's in C90 and beyond.
+      Update config.{guess,sub}, timestamps 2023-01-01,2023-01-21.
+    Documentation:
+      man: Document TCP flag names better.
+
 Thursday, January 12, 2023 / The Tcpdump Group
   Summary for 4.99.3 tcpdump release
     Updated printers:
@@ -858,7 +875,7 @@ Mon.    September 10, 2007.  ken@xelerance.com.  Summary for 3.9.8 tcpdump relea
 
 Wed.	July 23, 2007.  mcr@xelerance.com.  Summary for 3.9.7 libpcap release
 
-    	NFS: Print unsigned values as such.
+	NFS: Print unsigned values as such.
 	RX: parse safely.
 	BGP: fixes for IPv6-less builds.
 	801.1ag: use standard codepoint.
@@ -930,7 +947,7 @@ Tue.	September 19, 2006. ken@xelerance.com. Summary for 3.9.5 tcpdump release
 	Lots of minor cosmetic changes to output printers
 
 
-Mon. 	September 19, 2005.  ken@xelerance.com. Summary for 3.9.4 tcpdump release
+Mon.	September 19, 2005.  ken@xelerance.com. Summary for 3.9.4 tcpdump release
 	Decoder support for more Juniper link-layer types
 	Fix a potential buffer overflow (although it can't occur in
 		practice).
@@ -949,7 +966,7 @@ Mon. 	September 19, 2005.  ken@xelerance.com. Summary for 3.9.4 tcpdump release
 		those TLVs as system IDs, not as node IDs.
 	Support for DCCP.
 
-Tue. 	July 5, 2005.  ken@xelerance.com. Summary for 3.9.3 tcpdump release
+Tue.	July 5, 2005.  ken@xelerance.com. Summary for 3.9.3 tcpdump release
 
 	Option to chroot() when dropping privs
 	Fixes for compiling on nearly every platform,

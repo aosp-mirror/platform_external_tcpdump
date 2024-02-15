@@ -236,7 +236,7 @@
 #define PACKAGE_NAME "tcpdump"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "tcpdump 4.99.3"
+#define PACKAGE_STRING "tcpdump 4.99.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tcpdump"
@@ -245,7 +245,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.99.3"
+#define PACKAGE_VERSION "4.99.4"
 
 /* The size of `void *', as computed by sizeof. */
 /* #undef SIZEOF_VOID_P */
