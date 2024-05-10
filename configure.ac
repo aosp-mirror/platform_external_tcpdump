@@ -13,7 +13,7 @@ dnl
 # config.sub.
 #
 
-AC_PREREQ(2.64)
+AC_PREREQ(2.69)
 AC_INIT(tcpdump, m4_esyscmd_s([cat VERSION]))
 AC_CONFIG_SRCDIR(tcpdump.c)
 
@@ -380,7 +380,7 @@ if test "$ipv6" = "yes" -a "$ipv6lib" != "none"; then
 fi
 
 AC_REPLACE_FUNCS(strlcat strlcpy strdup strsep getservent getopt_long)
-AC_CHECK_FUNCS(fork vfork strftime)
+AC_CHECK_FUNCS(fork vfork)
 AC_CHECK_FUNCS(setlinebuf)
 
 #
