@@ -49,8 +49,8 @@ build_tcpdump() {
             export CRYPTO
             for SMB in $MATRIX_SMB; do
                 export SMB
-                COUNT=`increment $COUNT`
-                echo_magenta "===== SETUP $COUNT: BUILD_LIBPCAP=$BUILD_LIBPCAP REMOTE=${REMOTE:-?} CC=$CC CMAKE=$CMAKE CRYPTO=$CRYPTO SMB=$SMB =====" >&2
+                COUNT=`increment "$COUNT"`
+                echo_magenta "===== SETUP $COUNT: CC=$CC BUILD_LIBPCAP=$BUILD_LIBPCAP REMOTE=${REMOTE:-?} CMAKE=$CMAKE CRYPTO=$CRYPTO SMB=$SMB =====" >&2
                 # Run one build with setup environment variables:
                 # BUILD_LIBPCAP, REMOTE, CC, CMAKE, CRYPTO and SMB
                 run_after_echo ./build.sh
@@ -62,14 +62,12 @@ build_tcpdump() {
                 fi
                 run_after_echo rm -rf "$PREFIX"/bin/tcpdump*
                 run_after_echo git status -suall
-                # Cancel changes in configure
-                run_after_echo git checkout configure
             done
         done
     done
 }
 
-touch .devel configure
+touch .devel
 for CC in $MATRIX_CC; do
     export CC
     discard_cc_cache

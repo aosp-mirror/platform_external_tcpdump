@@ -1,26 +1,23 @@
 # This project was upgraded with external_updater.
-# Usage: tools/external_updater/updater.sh update tcpdump
-# For more info, check https://cs.android.com/android/platform/superproject/+/main:tools/external_updater/README.md
+# Usage: tools/external_updater/updater.sh update external/tcpdump
+# For more info, check https://cs.android.com/android/platform/superproject/main/+/main:tools/external_updater/README.md
 
 name: "tcpdump"
 description: "the TCPdump network dissector"
 third_party {
-  url {
-    type: HOMEPAGE
-    value: "https://www.tcpdump.org/"
-  }
-  url {
-    type: GIT
-    value: "https://github.com/the-tcpdump-group/tcpdump.git"
-  }
-  version: "tcpdump-4.99.4"
   license_type: NOTICE
   security {
     tag: "NVD-CPE2.3:cpe:/a:tcpdump:tcpdump:4.9.3"
   }
   last_upgrade_date {
-    year: 2023
-    month: 7
-    day: 12
+    year: 2025
+    month: 1
+    day: 10
+  }
+  homepage: "https://www.tcpdump.org/"
+  identifier {
+    type: "Git"
+    value: "https://github.com/the-tcpdump-group/tcpdump.git"
+    version: "tcpdump-4.99.5"
   }
 }
